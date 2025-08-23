@@ -1,4 +1,4 @@
-package fr.vutivo;
+package fr.vutivo.utils;
 
 /**
  * Interface pour les services du plugin NakimeParty

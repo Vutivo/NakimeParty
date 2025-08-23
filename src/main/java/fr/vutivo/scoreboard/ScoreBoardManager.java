@@ -1,8 +1,7 @@
 package fr.vutivo.scoreboard;
 
 import fr.mrmicky.fastboard.FastBoard;
-import fr.vutivo.NakimeParty;
-import fr.vutivo.NakimeService;
+import fr.vutivo.utils.NakimeService;
 import org.bukkit.entity.Player;
 
 import java.util.*;

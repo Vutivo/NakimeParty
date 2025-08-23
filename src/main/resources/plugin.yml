@@ -1,3 +1,6 @@
 name: NakimeParty
 version: '${project.version}'
 main: fr.vutivo.NakimeParty
+commands:
+  start:
+    description: Start a Nakime Party

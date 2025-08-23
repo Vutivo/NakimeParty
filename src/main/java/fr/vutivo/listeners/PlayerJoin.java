@@ -4,6 +4,7 @@ import fr.vutivo.game.GameService;
 import fr.vutivo.game.Joueur;
 import fr.vutivo.game.State;
 import fr.vutivo.scoreboard.ScoreBoardManager;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
@@ -24,17 +25,18 @@ public class PlayerJoin implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
+        event.setJoinMessage(null);
         if(canJoin(gameService, player)) {
             Joueur joueur = new Joueur(player);
             gameService.addJoueur(joueur);
-            player.setHealth(20);
-            player.setFoodLevel(20);
-            player.setLevel(0);
-            player.setExp(0);
-            player.getInventory().clear();
+            gameService.clearPlayerInventory(joueur);
             player.setGameMode(GameMode.SURVIVAL);
+            gameService.getSpawnManager().teleportToWorldSpawn(player, "world");
+            Bukkit.broadcastMessage("§a" + player.getName() + " a rejoint la partie" + "§7 (" + gameService.getJoueurs().size() + "/" + gameService.maxPlayers + ")");
+
 
             initScoreboard(scoreboardService, player);
+            gameService.getScoreBoardManager().updateLineAll(1, "Nombre de joueurs : " + ChatColor.GOLD + gameService.getJoueurs().size() + "/" + gameService.maxPlayers);
 
 
         }
@@ -43,7 +45,7 @@ public class PlayerJoin implements Listener {
     }
 
     private boolean canJoin(GameService service , Player player) {
-        if(service.getState().equals(State.WAITING)){
+        if(service.getState().equals(State.WAITING) || service.getState().equals(State.STARTING)) {
             if (service.minPlayers < service.maxPlayers) {
                 return true;
             } else {
@@ -61,8 +63,10 @@ public class PlayerJoin implements Listener {
         scoreboardService.create
                 (player, ChatColor.RED + "Nakime" + ChatColor.DARK_RED + ChatColor.BOLD + "Party",
                         "",
-                        "",
+                        "Nombre de joueurs : " + ChatColor.GOLD + gameService.getJoueurs().size() + "/" + gameService.maxPlayers,
                         ChatColor.GREEN + "Attente de joueurs...",
+                        "",
+                        "",
                         "Plugin developpé par",
                         ChatColor.GOLD + "Vutivo");
 

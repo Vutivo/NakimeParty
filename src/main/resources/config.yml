@@ -1,3 +1,7 @@
-Spawn:
-  worldName: "world"
-  location: -197, 117, 304, 135, -2
+Map:
+  world:
+    world: "world"
+    WorldSpawn: "-178, 5, 391, 0, 0"  # X, Y, Z, yaw, pitch
+    Spawn:
+      - "-179, 5, 406, -180, 0"
+      - "-182, 5, 406, -180, 0"
