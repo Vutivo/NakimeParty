@@ -1,18 +1,29 @@
 package fr.vutivo.roles;
 
+import fr.vutivo.game.GameService;
 import fr.vutivo.game.Joueur;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 
 public enum Description {
 
-    Tanjiro(Role.Tanjiro, "\n§8Effet :  §7Vouys avez un bonus de 20% de vitesse permanant. \n \n " +
-            "§8Flaire : Grace à votre flaire hors du commun, vous disposé d'une flèche au niveau de votre hoy-bar pour vous guidez vers le démon le plus proche.  \n \n"+
-            "§8Passif : §7Vous disposer du pouvoir de la dance du dieu du feu qui vous donnera 30% de chance de mettre en feu votre adversaire uniquement si vous êtes en dessous de 5 coeurs. " +
-            "Vous gagnez également 10% de force lorsque vous êtes en dessous de 5 coeurs. \n "),
+    Tanjiro(Role.Tanjiro, "§6Effet :  §7Vous avez un bonus de §b20% de vitesse§7 permanent. \n \n" +
+            "§6Flaire : §7Grâce à votre flaire hors du commun, vous disposez d'une flèche au niveau de votre hot-bar pour vous guider vers le démon le plus proche. \n \n"+
+            "§6Passif : §7Vous disposez du pouvoir de la §6danse du dieu du feu§7 qui vous donne §620%§7 de chance de §6mettre en feu§7 votre adversaire uniquement si vous êtes en dessous de 5 cœurs à l'éxeptrion de Doma. \n" +
+            "Vous gagnez également §c10% de force§7 lorsque vous êtes en dessous de 5 coeurs. \n"),
 
+    Nezuko(Role.Nezuko,
+            "§6Effet : §7Vous avez un bonus de §c20% de force§7 permanent ainsi que 2 cœurs supplémentaires.\n\n" +
+                    "Étant un démon, vous apparaissez aux yeux des démons comme un membre de leur équipe.\n" +
+                    "Par conséquent, c'est à vous de trahir l'équipe des démons.\n\n" +
+                    "Pour vous aider dans cette tâche, tous les slayers connaissent votre identité et vous connaissez l'identité de votre frère Tanjiro.\n\n" +
+                    "§6Item : §cRage du Démon§7. Il s'agit d'un pouvoir utilisable 1 fois dans la partie, qui vous octroie un bonus de 10% de force et 10% de vitesse pendant 15 secondes.\n" +
+                    "Attention : à la fin de ce pouvoir, vous perdez votre bonus ainsi que 10% de force et 10% de resistance.\n"),
 
-    Nakime(Role.Nakime, "Vous êtes un Démon. Votre objectif est de tuer tous les Slayers.");
+    Nakime(Role.Nakime, "Vous êtes un Démon. Votre objectif est de tuer tous les Slayers."),
+
+    Yoriichi(Role.Yoriichi, "");
 
     private final Role role;
     private final String description;
@@ -31,13 +42,13 @@ public enum Description {
     }
 
     private static String getCampMessage(Camp camp) {
-         switch (camp) {
+        switch (camp) {
             case Slayer:
-                return "Vous gagnez avec les Slayers.";
+                return "§aVous gagnez avec les Slayers.";
             case Demon:
-                return "Vous gagnez avec les Démons.";
+                return "§cVous gagnez avec les Démons.";
             case Solo:
-                return "Vous êtes seul, vous gagnez en étant le dernier en vie.";
+                return "§6Vous êtes seul, vous gagnez en étant le dernier en vie.";
             default:
                 return "";
         }
@@ -49,17 +60,24 @@ public enum Description {
 
         Player player = joueur.getPlayer();
         StringBuilder sb = new StringBuilder();
-        sb.append("§8======================================================\n");
-        sb.append("§9[Privé] Vous êtes §o§9").append(joueur.getRole().getName()).append(".§r\n");
-        sb.append(" ");
-        sb.append("Camp: ").append(getCampMessage(joueur.getCamp())).append("\n");
-        sb.append(" ");
-        sb.append("Description: ").append(desc.getDescription()).append("\n");
-        sb.append(" ");
-        sb.append("§8======================================================\n");
+        sb.append("§8=====================================================\n");
+        sb.append("§8[Privé] Vous êtes §o§9").append(joueur.getRole().getName()).append("§r\n");
+        sb.append("\n");
+        sb.append("§8Camp: ").append(getCampMessage(joueur.getCamp())).append("\n");
+        sb.append("\n");
+        sb.append("§8Description:\n");
+        sb.append("\n");
+        sb.append(desc.getDescription()).append("\n");
+        sb.append("§8=====================================================");
 
-        player.sendMessage(sb.toString());
+        // Envoi ligne par ligne pour garder les sauts visibles
+        for (String line : sb.toString().split("\n")) {
+            player.sendMessage(line);
+        }
+
     }
+
+
 
     public static Description getDescriptionForRole(Role role) {
         for (Description d : values()) {
@@ -67,4 +85,23 @@ public enum Description {
         }
         return null;
     }
+
+    public static void otherInfo(GameService gameService) {
+        Joueur nezuko = gameService.getRole(Role.Nezuko);
+        for (Joueur slayer : gameService.getSlayers()) {
+            if (!slayer.equals(nezuko)) { // Nezuko ne doit pas s'auto-connaître
+                sendRoleToJoueur(nezuko.getRole(), nezuko, slayer.getPlayer());
+            }
+        }
+    }
+
+    private static void sendRoleToJoueur(Role rolePlayer, Joueur roleFromJoueur, Player receiver) {
+        if (roleFromJoueur == null || receiver == null || rolePlayer == null) return;
+
+        // Affiche le rôle et le pseudo du joueur
+        String message = "§6" + rolePlayer.getName() + " §7: §c" + roleFromJoueur.getPlayer().getName();
+        receiver.sendMessage(message);
+    }
+
+
 }

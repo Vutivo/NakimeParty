@@ -3,7 +3,9 @@ package fr.vutivo.game;
 import fr.vutivo.roles.Camp;
 import fr.vutivo.roles.Role;
 import fr.vutivo.roles.RoleItem;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 
 public class Joueur {
@@ -14,11 +16,32 @@ public class Joueur {
     private int strength;
     private int resistance;
     private int speed;
+    private boolean isRageMode = false;
+    private boolean isAlive = true;
+
 
     public Joueur(Player player) {
         this.player = player;
     }
 
+    public RoleItem getRoleItem() {
+        return RoleItem.getByRole(this.role);
+    }
+
+    public boolean isAlive() {
+        return isAlive;
+    }
+    public void setAlive(boolean alive) {
+        isAlive = alive;
+    }
+
+public boolean getRageMode() {
+        return isRageMode;
+    }
+
+    public void setRageMode(boolean rageMode) {
+        isRageMode = rageMode;
+    }
     public Player getPlayer() {
         return player;
     }
@@ -62,14 +85,34 @@ public class Joueur {
     }
 
     public void setSpeed(int speed) {
+        getPlayer().setWalkSpeed(0.20f + (speed * 0.002f));
         this.speed = speed;
+    }
+    private void addMaxHealth() {
+        switch (this.getRole()){
+            case Nezuko: this.player.setMaxHealth(24.0);
+                         this.player.setHealth(24.0);
+                         break;
+
+        }
     }
 
     public void aplyItems(Role role) {
         RoleItem roleItem = RoleItem.getByRole(role);
         if (roleItem != null) {
-            this.player.getInventory().addItem(roleItem.getItem());
+            ItemStack item = roleItem.getItem();
+            if (item != null && item.getType() != Material.AIR) {
+                this.player.getInventory().addItem(item);
+            }
+
+            this.strength = roleItem.getStrength();
+            this.speed = roleItem.getSpeed();
+            this.resistance = roleItem.getResistance();
+
+            setSpeed(this.speed);
+            addMaxHealth();
         }
     }
+
 
 }
