@@ -75,7 +75,35 @@ public class GAutoStart extends BukkitRunnable {
         cancel();
         Collections.shuffle(gameService.getJoueurs());
 
+        int totalPlayers = gameService.getJoueurs().size();
+        int nbSlayers = totalPlayers / 2;
+        int nbDemons = totalPlayers / 2;
+        boolean hasYoriichi = (totalPlayers % 2 == 1);
+
         List<Role> roles = gameService.getCompo();
+//        // Yoriichi si impair
+//        if (hasYoriichi) {
+//            roles.add(Role.Yoriichi);
+//        }
+//
+//        // Slayers
+//        if (nbSlayers > 0) {
+//            roles.add(Role.Tanjiro); // priorité Tanjiro
+//            for (int i = 1; i < nbSlayers; i++) {
+//                roles.add(Role.getRandomSlayerExceptTanjiro());
+//            }
+//        }
+//
+//        // Demons
+//        if (nbDemons > 0) {
+//            roles.add(Role.Nakime); // priorité Nakime
+//            for (int i = 1; i < nbDemons; i++) {
+//                roles.add(Role.getRandomDemonExceptNakime());
+//            }
+//        }
+
+        roles.add(Role.Inosuke);
+        roles.add(Role.Gyomei);
         Collections.shuffle(roles);
 
         GameTask gameTask = new GameTask(gameService);
@@ -92,6 +120,7 @@ public class GAutoStart extends BukkitRunnable {
             joueur.setCamp(role.getCamp());
             gameService.givePlayerArmor(joueur);
             joueur.aplyItems(role);
+            joueur.setCooldown(0);
             Description.sendDescriptionToPlayer(joueur);
 
             if(joueur.getCamp() == Camp.Slayer) {

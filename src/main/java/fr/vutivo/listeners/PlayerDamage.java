@@ -5,10 +5,12 @@ import fr.vutivo.game.Joueur;
 import fr.vutivo.game.State;
 import fr.vutivo.roles.Role;
 import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 
 import java.util.Random;
 
@@ -27,6 +29,8 @@ public class PlayerDamage implements Listener {
             event.setCancelled(true);
             return; // Important : arrêter l'exécution si le jeu n'est pas en cours
         }
+
+
 
         // Vérifier que l'attaquant et la victime sont des joueurs
         if (!(event.getDamager() instanceof Player) || !(event.getEntity() instanceof Player)) {
@@ -50,8 +54,9 @@ public class PlayerDamage implements Listener {
         event.setDamage(newDamage);
         // Appliquer l'effet du mode rage de Tanjiro
         applyTanjiroRageMode(jAttacker, victim);
+        // Appliquer l'effet de la frappe foudroyante de Zenitsu
+        applyZenitsuThunderStrike(jAttacker, victim);
 
-        Bukkit.broadcastMessage("§c" + attacker.getName() + " inflige §6" + String.format("%.2f", newDamage) + "§c dégâts à §e" + victim.getName());
 
 
 
@@ -72,7 +77,7 @@ public class PlayerDamage implements Listener {
         Joueur jVictim = gameService.getJoueur(victim);
         if (joueur.getRole().equals(Role.Tanjiro) && joueur.getRageMode()) {
             int chance = random.nextInt(100);
-            if (chance < 20) { // 20% de chance d'activer le mode rage
+            if (chance < 20 ) { // 20% de chance d'activer le mode rage
                 //mettre en feu l'adversaiere
                 // Tanjiro ne peut pas mettre en feu Doma
                 if(jVictim.getRole().equals(Role.Doma)){
@@ -84,4 +89,50 @@ public class PlayerDamage implements Listener {
         }
 
     }
+
+    @EventHandler
+    public void onPlayerDamageNoEntity(EntityDamageEvent event) {
+        if (event.getEntity() instanceof Player) {
+            Joueur joueur = gameService.getJoueur((Player) event.getEntity());
+            // Vérifier l'état du jeu
+            if (gameService.getState() != State.PLAYING) {
+                event.setCancelled(true);
+                return; // Important : arrêter l'exécution si le jeu n'est pas en cours
+            }
+            //empecher les dégats de chute
+            if (event.getCause() == EntityDamageEvent.DamageCause.FALL) {
+                event.setCancelled(true);
+                return;
+            }
+            if (joueur != null && joueur.isInDash()) {
+                event.setCancelled(true);
+                return;
+
+            }
+            // Empêcher les dégâts d'explosion si le joueur a l'état ignoreExplosion
+            if (joueur != null && joueur.isIgnoreExplosion()) {
+                event.setCancelled(true);
+
+            }
+        }
+    }
+
+    private void applyZenitsuThunderStrike(Joueur joueur, Player victim) {
+        Joueur jVictim = gameService.getJoueur(victim);
+        World world = victim.getWorld();
+        if (joueur.getRole().equals(Role.Zenitsu)) {
+            int chance = random.nextInt(100);
+            if (chance < 15) { // 15% de chance d'invoquer un éclair
+                if(jVictim.getRole().equals(Role.Doma)){
+                    return;
+                }
+                // Infliger 1 cœur supplémentaire (2 points de vie)
+                double additionalDamage = 2.0;
+                world.strikeLightningEffect(victim.getLocation());
+                victim.setHealth(Math.max(0.5, victim.getHealth() - additionalDamage));
+                victim.sendMessage("§eUn éclair vous a frappé, infligeant §c1❤§e de dégat !");
+            }
+        }
+    }
+
 }

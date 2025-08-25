@@ -17,6 +17,7 @@ import org.bukkit.World;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scoreboard.*;
 
 
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ public class GameService implements NakimeService {
     private final NakimeParty instance;
     private final ScoreBoardManager scoreBoardManager;
     private final SpawnManager spawnManager;
+    private ScoreboardManager scoreboardManager ;
     private State state;
     public int minPlayers = 10;
     public int maxPlayers = 17;
@@ -49,8 +51,8 @@ public class GameService implements NakimeService {
         this.Slayers = new ArrayList<>();
         this.Demons = new ArrayList<>();
         this.spawnManager = new SpawnManager(instance);
-        compo.add(Role.Tanjiro);
-        compo.add(Role.Nezuko);
+        this.scoreboardManager = Bukkit.getScoreboardManager();
+
     }
 
     @Override
@@ -144,9 +146,6 @@ public class GameService implements NakimeService {
         return instance;
     }
 
-    public GameTask getGameTask() {
-        return gameTask;
-    }
     public void setGameTask(GameTask gameTask) {
         this.gameTask = gameTask;
     }
@@ -288,9 +287,45 @@ public class GameService implements NakimeService {
                 }
             }
         }
-
-
     }
+    public void viewHpPlayer(Player player) {
+        // Créer un nouveau scoreboard pour ce joueur
+        Scoreboard scoreboard = scoreboardManager.getNewScoreboard();
+
+        // Créer l'objectif pour afficher la vie au-dessus de la tête
+        Objective healthObjective = scoreboard.registerNewObjective("health", "health");
+        healthObjective.setDisplaySlot(DisplaySlot.BELOW_NAME);
+        healthObjective.setDisplayName("❤"); // Symbole cœur
+
+        // Appliquer le scoreboard au joueur
+        player.setScoreboard(scoreboard);
+        // Mettre à jour la vie de tous les joueurs pour ce joueur
+        updateAllPlayersHealthFor(player);
+    }
+
+    public void disableHealthDisplay(Player player) {
+        player.setScoreboard(scoreboardManager.getMainScoreboard());
+
+
+        }
+    private void updateAllPlayersHealthFor(Player viewer) {
+        Scoreboard scoreboard = viewer.getScoreboard();
+        Objective healthObjective = scoreboard.getObjective(DisplaySlot.BELOW_NAME);
+
+        if (healthObjective != null) {
+            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                // Calculer la santé actuelle (arrondie au supérieur)
+                int health = (int) Math.ceil(onlinePlayer.getHealth());
+                // Appliquer immédiatement le score
+                healthObjective.getScore(onlinePlayer.getName()).setScore(health);
+            }
+        }
+    }
+
+
+
+
+
     public double getRelativeAngle(Player from, Player to) {
         // Calcul de l'angle entre les deux joueurs sur l'axe horizontal (X, Z)
         double angle = Math.toDegrees(Math.atan2(to.getLocation().getZ() - from.getLocation().getZ(), to.getLocation().getX() - from.getLocation().getX()));

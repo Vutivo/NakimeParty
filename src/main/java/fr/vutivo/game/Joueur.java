@@ -16,8 +16,11 @@ public class Joueur {
     private int strength;
     private int resistance;
     private int speed;
+    private int cooldown;
     private boolean isRageMode = false;
     private boolean isAlive = true;
+    private boolean isInDash = false;
+    private boolean ignoreExplosion = false;
 
 
     public Joueur(Player player) {
@@ -44,6 +47,20 @@ public boolean getRageMode() {
     }
     public Player getPlayer() {
         return player;
+    }
+
+    public boolean isInDash() {
+        return isInDash;
+    }
+
+    public void setInDash(boolean inDash) {
+        isInDash = inDash;
+    }
+    public boolean isIgnoreExplosion() {
+        return ignoreExplosion;
+    }
+    public void setIgnoreExplosion(boolean ignoreExplosion) {
+        this.ignoreExplosion = ignoreExplosion;
     }
 
     public Role getRole() {
@@ -84,15 +101,26 @@ public boolean getRageMode() {
         return speed;
     }
 
+    public int getCooldown() {
+        return cooldown;
+    }
+    public void setCooldown(int cooldown) {
+        this.cooldown = cooldown;
+    }
+
     public void setSpeed(int speed) {
         getPlayer().setWalkSpeed(0.20f + (speed * 0.002f));
         this.speed = speed;
     }
     private void addMaxHealth() {
         switch (this.getRole()){
-            case Nezuko: this.player.setMaxHealth(24.0);
-                         this.player.setHealth(24.0);
-                         break;
+            case Nezuko:
+            case Gyomei:
+            case Yoriichi:
+                this.player.setMaxHealth(24.0);
+                this.player.setHealth(24.0);
+                break;
+
 
         }
     }

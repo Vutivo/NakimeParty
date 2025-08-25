@@ -1,5 +1,9 @@
 package fr.vutivo.roles;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
 public enum Role {
     Tanjiro("§aTanjiro", Camp.Slayer),
     Nezuko("§aNezuko", Camp.Slayer),
@@ -21,7 +25,7 @@ public enum Role {
     Kaigaku("§cKaigaku", Camp.Demon),
     Susamaru("§cSusamaru", Camp.Demon),
 
-    Yoriichi("§aYoriichi", Camp.Solo);
+    Yoriichi("§6Yoriichi", Camp.Solo);
 
 
     private final String name;
@@ -38,5 +42,24 @@ public enum Role {
     }
     public Camp getCamp() {
         return camp;
+    }
+    public static Role getRandomSlayerExceptTanjiro() {
+        List<Role> slayers = new ArrayList<>();
+        for (Role r : values()) {
+            if (r.getCamp() == Camp.Slayer && r != Tanjiro) {
+                slayers.add(r);
+            }
+        }
+        return slayers.get(new Random().nextInt(slayers.size()));
+    }
+
+    public static Role getRandomDemonExceptNakime() {
+        List<Role> demons = new ArrayList<>();
+        for (Role r : values()) {
+            if (r.getCamp() == Camp.Demon && r != Nakime) {
+                demons.add(r);
+            }
+        }
+        return demons.get(new Random().nextInt(demons.size()));
     }
 }
