@@ -10,22 +10,22 @@ public enum RoleItem {
     Zenitsu(Role.Zenitsu, Material.NETHER_STAR, "§eFrappe Foudroyante", 0, 20, 0,1,0),
     Inosuke(Role.Inosuke, Material.NETHER_STAR, "§bSixième Sens", 0, 0, 20,1,0),
     Gyomei(Role.Gyomei, Material.STONE_AXE, "§bOnde de choc", 0, 0, 20,2,30),
-    Tomioka(Role.Tomioka, null, null, 0, 0, 0,0,0),
-    Sanemi(Role.Sanemi, null, null, 0, 0, 0,0,0),
-    Mitsuri(Role.Mitsuri, null, null, 0, 0, 0,0,0),
+    Tomioka(Role.Tomioka, Material.NETHER_STAR, "§bSphère d’Eau", 0, 20, 0,2,45),
+    Sanemi(Role.Sanemi, Material.NETHER_STAR,"§bRafale Violente" , 0, 20, 0,2,30),
+    Mitsuri(Role.Mitsuri, Material.NETHER_STAR, "§bFlamme de l’Amour", 10, 0, 0,2,45),
     Shinobu(Role.Shinobu, null, null, 0, 0, 0,0,0),
 
-    Nakime(Role.Nakime, null, null, 0, 0, 0,0,0),
-    Muzan(Role.Muzan, null, null, 0, 0, 0,0,0),
-    Kokushibo(Role.Kokushibo, null, null, 0, 0, 0,0,0),
-    Doma(Role.Doma, null, null, 0, 0, 0,0,0),
-    Akaza(Role.Akaza, null, null, 0, 0, 0,0,0),
-    Gyokko(Role.Gyokko, null, null, 0, 0, 0,0,0),
-    Gyutaro(Role.Gyutaro, null, null, 0, 0, 0,0,0),
-    Kaigaku(Role.Kaigaku, null, null, 0, 0, 0,0,0),
-    Susamaru(Role.Susamaru, null, null, 0, 0, 0,0,0),
+    Nakime(Role.Nakime, Material.NETHER_STAR, "§bBiwa", 20, 20, 0,1,0),
+    Muzan(Role.Muzan, null, null, 0, 0, 20,0,0),
+    Kokushibo(Role.Kokushibo, null, null, 0, 20, 0,0,0),
+    Doma(Role.Doma, Material.NETHER_STAR, "§bSérénité Mortelle", 0, 0, 20,1,0),
+    Akaza(Role.Akaza, null, null, 20, 0, 0,0,0),
+    Gyokko(Role.Gyokko, Material.NETHER_STAR, "§bTransposition", 0, 0, 20,3,30),
+    Gyutaro(Role.Gyutaro, Material.DIAMOND_HOE," §Houe de Souffrance", 20, 0, 0,1,0),
+    Kaigaku(Role.Kaigaku, Material.NETHER_STAR, "§bFoudre Déchaînée", 0, 20, 0,2,90),
+    Susamaru(Role.Susamaru, Material.BOW, "§bArc Explosif", 0, 0, 0,0,0),
 
-    Yoriichi(Role.Yoriichi, null, null, 0, 0, 0,0,0);
+    Yoriichi(Role.Yoriichi, Material.NETHER_STAR, "§bFlamme Éternelle", 20, 10, 0,1,0);
 
     private final Role role;
     private final Material material;

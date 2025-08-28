@@ -10,14 +10,12 @@ import fr.vutivo.game.map.SpawnManager;
 import fr.vutivo.scoreboard.ScoreBoardManager;
 import fr.vutivo.task.GAutoStart;
 import fr.vutivo.utils.ItemBuilder;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scoreboard.*;
+import org.bukkit.util.Vector;
 
 
 import java.util.ArrayList;
@@ -42,6 +40,7 @@ public class GameService implements NakimeService {
     public int maxSlayers ;
     public int maxDemons ;
     public int maxJoueurs;
+    public String MAP_NAME = "world";
 
 
     public GameService() {
@@ -52,6 +51,7 @@ public class GameService implements NakimeService {
         this.Demons = new ArrayList<>();
         this.spawnManager = new SpawnManager(instance);
         this.scoreboardManager = Bukkit.getScoreboardManager();
+
 
     }
 
@@ -187,9 +187,9 @@ public class GameService implements NakimeService {
     }
 
     public void givePlayerArmor(Joueur joueur) {
-        // Donne une armure type UHC avec 16 gap arc et 32 flèches
         clearPlayerInventory(joueur);
 
+        // Armure
         ItemStack helmet = new ItemBuilder(Material.DIAMOND_HELMET, 1)
                 .addEnchant(Enchantment.DURABILITY, 2)
                 .addEnchant(Enchantment.PROTECTION_ENVIRONMENTAL, 2)
@@ -205,11 +205,16 @@ public class GameService implements NakimeService {
                 .addEnchant(Enchantment.PROTECTION_ENVIRONMENTAL, 3)
                 .build();
 
-        ItemStack boots = new ItemBuilder(Material.IRON_BOOTS, 1)
+        ItemBuilder bootsBuilder = new ItemBuilder(Material.IRON_BOOTS, 1)
                 .addEnchant(Enchantment.DURABILITY, 2)
-                .addEnchant(Enchantment.PROTECTION_ENVIRONMENTAL, 3)
-                .build();
+                .addEnchant(Enchantment.PROTECTION_ENVIRONMENTAL, 3);
 
+        if (joueur.getRole() == Role.Tomioka) {
+            bootsBuilder.addEnchant(Enchantment.DEPTH_STRIDER, 3);
+        }
+        ItemStack boots = bootsBuilder.build();
+
+        // Armes
         ItemStack sword = new ItemBuilder(Material.DIAMOND_SWORD, 1)
                 .addEnchant(Enchantment.DURABILITY, 2)
                 .addEnchant(Enchantment.DAMAGE_ALL, 3)
@@ -220,19 +225,24 @@ public class GameService implements NakimeService {
                 .addEnchant(Enchantment.ARROW_DAMAGE, 3)
                 .build();
 
-        ItemStack arrows = new ItemBuilder(Material.ARROW, 32).build();
-        ItemStack gapple = new ItemBuilder(Material.GOLDEN_APPLE, 16).build();
+        // Consommables
+        int arrowCount = (joueur.getRole() == Role.Susamaru) ? 64 : 32;
+        ItemStack arrows = new ItemBuilder(Material.ARROW, arrowCount).build();
 
-        joueur.getPlayer().getInventory().setHelmet(helmet);
-        joueur.getPlayer().getInventory().setChestplate(chestplate);
-        joueur.getPlayer().getInventory().setLeggings(leggings);
-        joueur.getPlayer().getInventory().setBoots(boots);
-        joueur.getPlayer().getInventory().addItem(sword);
-        joueur.getPlayer().getInventory().addItem(bow);
-        joueur.getPlayer().getInventory().addItem(arrows);
-        joueur.getPlayer().getInventory().addItem(gapple);
-        joueur.getPlayer().updateInventory();
+        int gapCount = (joueur.getRole() == Role.Yoriichi) ? 24 : 16;
+        ItemStack gapple = new ItemBuilder(Material.GOLDEN_APPLE, gapCount).build();
+
+        // Attribution
+        Player player = joueur.getPlayer();
+        player.getInventory().setHelmet(helmet);
+        player.getInventory().setChestplate(chestplate);
+        player.getInventory().setLeggings(leggings);
+        player.getInventory().setBoots(boots);
+
+        player.getInventory().addItem(sword, bow, arrows, gapple);
+        player.updateInventory();
     }
+
 
     public String Chrono(int totalSeconds) {
         int minutes = totalSeconds / 60;
@@ -248,9 +258,9 @@ public class GameService implements NakimeService {
     }
 
     private void setGamerules() {
-        World world = Bukkit.getWorld(instance.MAP_NAME);
+        World world = Bukkit.getWorld(MAP_NAME);
         if (world == null) {
-            Bukkit.getLogger().info("Le monde " + instance.MAP_NAME + " n'est pas chargé !");
+            Bukkit.getLogger().info("Le monde " + MAP_NAME + " n'est pas chargé !");
             return;
         }
 
@@ -342,6 +352,45 @@ public class GameService implements NakimeService {
         return (angle - playerYaw + 360) % 360;
     }
 
+    public Joueur getTargetJoueur(Joueur joueur, int maxDistance) {
+        Player player = joueur.getPlayer();
+        Location eyeLocation = player.getEyeLocation();
+        Vector direction = eyeLocation.getDirection().normalize();
+        Joueur closest = null;
+        double closestDistance = maxDistance;
+
+        // Constante pour ajuster la tolérance de la détection
+        final double hitboxTolerance = 0.5;
+
+        // Avance petit à petit dans la direction du regard
+        for (double i = 0; i <= maxDistance; i += 0.5) {
+            Location point = eyeLocation.clone().add(direction.clone().multiply(i));
+
+            // On parcourt la liste de tous les joueurs pour les cibler
+            for (Joueur otherJoueur : getJoueurs()) {
+                Player otherPlayer = otherJoueur.getPlayer();
+
+                if (otherPlayer.equals(player) || !otherPlayer.isOnline() || !otherJoueur.isAlive()) {
+                    continue; // Ignorer soi-même et les joueurs inactifs
+                }
+
+                Location playerLocation = otherPlayer.getLocation();
+
+                // Vérifie si le point est dans la zone du joueur (hitbox simplifiée)
+                if (Math.abs(point.getX() - playerLocation.getX()) < hitboxTolerance &&
+                        Math.abs(point.getZ() - playerLocation.getZ()) < hitboxTolerance &&
+                        point.getY() > playerLocation.getY() && point.getY() < playerLocation.getY() + 1.9) {
+
+                    double dist = player.getLocation().distance(otherPlayer.getLocation());
+                    if (dist < closestDistance) {
+                        closestDistance = dist;
+                        closest = otherJoueur;
+                    }
+                }
+            }
+        }
+        return closest;
+    }
     public String getTanjiroArrow(Player from, Player to) {
         // Appel de la méthode extraite pour obtenir l'angle relatif
         double relativeAngle = getRelativeAngle(from, to);
@@ -384,6 +433,7 @@ public class GameService implements NakimeService {
         joueur.getPlayer().getInventory().setArmorContents(null);
         joueur.getPlayer().setWalkSpeed(0.2f);
         joueur.getPlayer().updateInventory();
+        joueur.getPlayer().getActivePotionEffects().forEach(effect -> joueur.getPlayer().removePotionEffect(effect.getType()));
 
     }
 
@@ -394,6 +444,8 @@ public class GameService implements NakimeService {
         instance.getServer().getPluginManager().registerEvents(new PlayerDamage(this), instance);
         instance.getServer().getPluginManager().registerEvents(new PlayerDeath(this), instance);
         instance.getServer().getPluginManager().registerEvents(new PlayerInteract(this), instance);
+        instance.getServer().getPluginManager().registerEvents(new WaterFlow(), instance);
+
 
 
     }

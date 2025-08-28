@@ -20,7 +20,10 @@ public class Joueur {
     private boolean isRageMode = false;
     private boolean isAlive = true;
     private boolean isInDash = false;
-    private boolean ignoreExplosion = false;
+    private boolean ignoreDamage = false;
+    private boolean canDamageMitsuri = true;
+    private boolean nakimeRevived = true;
+    private boolean isDomaSlowed = false;
 
 
     public Joueur(Player player) {
@@ -56,11 +59,30 @@ public boolean getRageMode() {
     public void setInDash(boolean inDash) {
         isInDash = inDash;
     }
-    public boolean isIgnoreExplosion() {
-        return ignoreExplosion;
+    public boolean isIgnoreDamage() {
+        return ignoreDamage;
     }
-    public void setIgnoreExplosion(boolean ignoreExplosion) {
-        this.ignoreExplosion = ignoreExplosion;
+    public void setIgnoreDamage(boolean ignoreDamage) {
+        this.ignoreDamage = ignoreDamage;
+    }
+
+    public  boolean isCanDamageMitsuri() {
+        return canDamageMitsuri;
+    }
+    public void setCanDamageMitsuri(boolean canDamageMitsuri) {
+        this.canDamageMitsuri = canDamageMitsuri;
+    }
+    public boolean isNakimeRevived() {
+        return nakimeRevived;
+    }
+    public void setNakimeRevived(boolean nakimeRevived) {
+        this.nakimeRevived = nakimeRevived;
+    }
+    public boolean isDomaSlowed() {
+        return isDomaSlowed;
+    }
+    public void setDomaSlowed(boolean domaSlowed) {
+        isDomaSlowed = domaSlowed;
     }
 
     public Role getRole() {

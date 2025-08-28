@@ -8,7 +8,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class NakimeParty extends JavaPlugin {
     private GameService gameService;
     private static NakimeParty instance;
-    public String MAP_NAME = "world";
+
 
 
 

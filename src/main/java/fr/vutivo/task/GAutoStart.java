@@ -102,8 +102,8 @@ public class GAutoStart extends BukkitRunnable {
 //            }
 //        }
 
-        roles.add(Role.Inosuke);
         roles.add(Role.Gyomei);
+        roles.add(Role.Doma);
         Collections.shuffle(roles);
 
         GameTask gameTask = new GameTask(gameService);
