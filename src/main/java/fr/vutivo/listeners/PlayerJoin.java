@@ -31,7 +31,7 @@ public class PlayerJoin implements Listener {
             gameService.addJoueur(joueur);
             gameService.clearPlayerInventory(joueur);
             player.setGameMode(GameMode.SURVIVAL);
-            gameService.getSpawnManager().teleportToWorldSpawn(player, "world");
+            gameService.getSpawnManager().teleportToWorldSpawn(player, gameService.MAP_NAME);
             Bukkit.broadcastMessage("§a" + player.getName() + " a rejoint la partie" + "§7 (" + gameService.getJoueurs().size() + "/" + gameService.maxPlayers + ")");
 
 
@@ -46,7 +46,7 @@ public class PlayerJoin implements Listener {
 
     private boolean canJoin(GameService service , Player player) {
         if(service.getState().equals(State.WAITING) || service.getState().equals(State.STARTING)) {
-            if (service.minPlayers < service.maxPlayers) {
+            if (service.getJoueurs().size() < service.maxPlayers) {
                 return true;
             } else {
                 player.kickPlayer("§cLa partie est pleine");

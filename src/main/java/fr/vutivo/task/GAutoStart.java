@@ -8,6 +8,8 @@ import fr.vutivo.roles.Description;
 import fr.vutivo.roles.Role;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 
@@ -76,34 +78,36 @@ public class GAutoStart extends BukkitRunnable {
         Collections.shuffle(gameService.getJoueurs());
 
         int totalPlayers = gameService.getJoueurs().size();
-        int nbSlayers = totalPlayers / 2;
-        int nbDemons = totalPlayers / 2;
+        List<Role> roles = new ArrayList<>();
+
+        // Limiter les équipes à 8 maximum
+        int nbSlayers = Math.min(8, totalPlayers / 2);
+        int nbDemons = Math.min(8, totalPlayers / 2);
+
+        // Si nombre impair et qu'on n'a pas atteint les limites
         boolean hasYoriichi = (totalPlayers % 2 == 1);
 
-        List<Role> roles = gameService.getCompo();
-//        // Yoriichi si impair
-//        if (hasYoriichi) {
-//            roles.add(Role.Yoriichi);
-//        }
-//
-//        // Slayers
-//        if (nbSlayers > 0) {
-//            roles.add(Role.Tanjiro); // priorité Tanjiro
-//            for (int i = 1; i < nbSlayers; i++) {
-//                roles.add(Role.getRandomSlayerExceptTanjiro());
-//            }
-//        }
-//
-//        // Demons
-//        if (nbDemons > 0) {
-//            roles.add(Role.Nakime); // priorité Nakime
-//            for (int i = 1; i < nbDemons; i++) {
-//                roles.add(Role.getRandomDemonExceptNakime());
-//            }
-//        }
+        // Ajouter Yoriichi si nécessaire
+        if (hasYoriichi) {
+            roles.add(Role.Yoriichi);
+        }
 
-        roles.add(Role.Gyomei);
-        roles.add(Role.Doma);
+        // Ajouter les slayers (maximum 8)
+        if (nbSlayers > 0) {
+            roles.add(Role.Tanjiro);
+            for (int i = 1; i < nbSlayers; i++) {
+                roles.add(Role.getRandomSlayerExceptTanjiro());
+            }
+        }
+
+        // Ajouter les démons (maximum 8)
+        if (nbDemons > 0) {
+            roles.add(Role.Nakime);
+            for (int i = 1; i < nbDemons; i++) {
+                roles.add(Role.getRandomDemonExceptNakime());
+            }
+        }
+
         Collections.shuffle(roles);
 
         GameTask gameTask = new GameTask(gameService);
@@ -113,7 +117,8 @@ public class GAutoStart extends BukkitRunnable {
         for (int i = 0; i < gameService.getJoueurs().size(); i++) {
             Joueur joueur = gameService.getJoueurs().get(i);
 
-            gameService.getSpawnManager().teleportRandomSpawn(joueur.getPlayer(), "world");
+            gameService.getSpawnManager().teleportRandomSpawn(joueur.getPlayer(), gameService.MAP_NAME);
+
 
             Role role = roles.get(i);
             joueur.setRole(role);
@@ -121,6 +126,8 @@ public class GAutoStart extends BukkitRunnable {
             gameService.givePlayerArmor(joueur);
             joueur.aplyItems(role);
             joueur.setCooldown(0);
+            //Night vision
+            joueur.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 0));
             Description.sendDescriptionToPlayer(joueur);
 
             if(joueur.getCamp() == Camp.Slayer) {

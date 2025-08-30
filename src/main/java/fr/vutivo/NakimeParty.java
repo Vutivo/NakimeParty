@@ -1,8 +1,6 @@
 package fr.vutivo;
 
 import fr.vutivo.game.GameService;
-
-import fr.vutivo.task.GAutoStart;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class NakimeParty extends JavaPlugin {
@@ -26,6 +24,7 @@ public final class NakimeParty extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        gameService.unregister();
         // Plugin shutdown logic
     }
 

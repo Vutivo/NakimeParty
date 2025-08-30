@@ -11,15 +11,21 @@ import fr.vutivo.scoreboard.ScoreBoardManager;
 import fr.vutivo.task.GAutoStart;
 import fr.vutivo.utils.ItemBuilder;
 import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.MaterialData;
 import org.bukkit.scoreboard.*;
 import org.bukkit.util.Vector;
 
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class GameService implements NakimeService {
 
@@ -37,10 +43,12 @@ public class GameService implements NakimeService {
     public List<Joueur> joueurs;
     public List <Joueur> Slayers ;
     public List <Joueur> Demons ;
+    // List des blocs incassables
+    public List <MaterialData> blocsUnbreakable ;
     public int maxSlayers ;
     public int maxDemons ;
     public int maxJoueurs;
-    public String MAP_NAME = "world";
+    public String MAP_NAME = "Nakime";
 
 
     public GameService() {
@@ -49,6 +57,7 @@ public class GameService implements NakimeService {
         this.joueurs = new ArrayList<>();
         this.Slayers = new ArrayList<>();
         this.Demons = new ArrayList<>();
+        this.blocsUnbreakable = new ArrayList<>();
         this.spawnManager = new SpawnManager(instance);
         this.scoreboardManager = Bukkit.getScoreboardManager();
 
@@ -59,15 +68,31 @@ public class GameService implements NakimeService {
     public void register() {
         listenersManager();
         commandManager();
-        setGamerules();
         scoreBoardManager.register();
         setState(State.WAITING);
+        createWorld();
+
+        // Initialisation de la liste des blocs incassables
+        blocsUnbreakable.add(new MaterialData(Material.GRASS));
+        // Verre noir (95:15)
+        blocsUnbreakable.add(new MaterialData(Material.STAINED_GLASS, (byte) 15));
+
+        // Argile durcie marron (159:13)
+        blocsUnbreakable.add(new MaterialData(Material.STAINED_CLAY, (byte) 12));
+
+        // Argile durcie grise (159:7)
+        blocsUnbreakable.add(new MaterialData(Material.STAINED_CLAY, (byte) 7));
+
+
+
+
 
     }
 
     @Override
     public void unregister() {
         scoreBoardManager.unregister();
+        deleteWorld();
 
         // Nettoyage des ressources si nécessaire
     }
@@ -421,7 +446,49 @@ public class GameService implements NakimeService {
     public void reloadEffectScoreboard(Joueur joueur) {
         getScoreBoardManager().updateLine(joueur.getPlayer(), 10,"⚔"+ joueur.getStrength() + " ✦"+ joueur.getResistance() + " ⚡"+ joueur.getSpeed());
     }
+    // Méthode pour vérifier si un bloc est incassable
+    public boolean isUnbreakable(Block block) {
+        Material type = block.getType();
+        byte data = block.getData();
 
+        // Parcourir la liste des MaterialData
+        for (MaterialData materialData : blocsUnbreakable) {
+            if (materialData.getItemType() == type && materialData.getData() == data) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void createCustomExplosion(Location location, float power) {
+        World world = location.getWorld();
+        if (world != null) {
+            world.createExplosion(location, 0);//On met l'explo à 0 car on gere l'explo manuellement
+           blockDestruction(location, power);
+
+        }
+    }
+    private void blockDestruction(Location center,float Power) {
+        World world = center.getWorld();
+        if (world == null) return;
+
+        int radius = (int) Math.ceil(Power); // Rayon de l'explosion basé sur la puissance
+
+        for (int x = -radius; x <= radius; x++) {
+            for (int y = -radius; y <= radius; y++) {
+                for (int z = -radius; z <= radius; z++) {
+                    Location blockLocation = center.clone().add(x, y, z);
+                    if (blockLocation.distance(center) <= radius) {
+                        Block block = world.getBlockAt(blockLocation);
+                        if (!isUnbreakable(block)) {
+                            // On peut ajouter des effets visuels ici si nécessaire
+                            block.setType(Material.AIR); // Détruire le bloc
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     public void clearPlayerInventory(Joueur joueur) {
         joueur.getPlayer().getInventory().clear();
@@ -437,6 +504,107 @@ public class GameService implements NakimeService {
 
     }
 
+    private void createWorld() {
+        // 1) Dossier cible où le monde doit être créé
+        File worldFolder = new File(instance.getServer().getWorldContainer(), MAP_NAME);
+
+        // 2) Supprimer le monde existant s'il y en a un
+        if (worldFolder.exists()) {
+            deleteDirectory(worldFolder);
+            instance.getLogger().info("§cAncien monde " + MAP_NAME + " supprimé");
+        }
+
+        // 3) Extraire le ZIP depuis les resources du plugin
+        if (!worldFolder.exists()) {
+            instance.saveResource(MAP_NAME + ".zip", false);
+            File zipFile = new File(instance.getDataFolder(), MAP_NAME + ".zip");
+
+            if (zipFile.exists()) {
+                unzipWorld(zipFile, worldFolder);
+                zipFile.delete(); // Nettoyer le fichier ZIP temporaire
+                instance.getLogger().info("§aMonde " + MAP_NAME + " extrait depuis le ZIP !");
+            } else {
+                instance.getLogger().severe("§cFichier " + MAP_NAME + ".zip introuvable dans les resources !");
+                return;
+            }
+        }
+
+        // 4) Charger le monde
+        World world = new WorldCreator(MAP_NAME).createWorld();
+
+        if (world != null) {
+            instance.getLogger().info("§aMonde " + MAP_NAME + " chargé avec succès !");
+            setGamerules();
+        } else {
+            instance.getLogger().severe("§cImpossible de charger le monde " + MAP_NAME);
+        }
+    }
+
+    private void unzipWorld(File zipFile, File destDir) {
+        try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(zipFile)) {
+            java.util.Enumeration<? extends java.util.zip.ZipEntry> entries = zip.entries();
+
+            while (entries.hasMoreElements()) {
+                java.util.zip.ZipEntry entry = entries.nextElement();
+                String entryName = entry.getName();
+
+                // Ignorer le dossier racine s'il y en a un
+                if (entryName.startsWith(MAP_NAME + "/")) {
+                    entryName = entryName.substring((MAP_NAME + "/").length());
+                }
+
+                if (entryName.isEmpty()) continue;
+
+                File file = new File(destDir, entryName);
+
+                if (entry.isDirectory()) {
+                    file.mkdirs();
+                } else {
+                    file.getParentFile().mkdirs();
+
+                    try (java.io.InputStream is = zip.getInputStream(entry);
+                         java.io.FileOutputStream fos = new java.io.FileOutputStream(file)) {
+
+                        byte[] buffer = new byte[4096];
+                        int len;
+                        while ((len = is.read(buffer)) > 0) {
+                            fos.write(buffer, 0, len);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void deleteDirectory(File dir) {
+        if (dir.isDirectory()) {
+            File[] files = dir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    deleteDirectory(file);
+                }
+            }
+        }
+        dir.delete();
+    }
+
+    private void deleteWorld() {
+        World world = Bukkit.getWorld(MAP_NAME);
+        if (world != null) {
+            Bukkit.unloadWorld(world, false);
+        }
+
+        File worldFolder = new File(instance.getServer().getWorldContainer(), MAP_NAME);
+        if (worldFolder.exists()) {
+            deleteDirectory(worldFolder);
+            instance.getLogger().info("§cMonde " + MAP_NAME + " supprimé !");
+        }
+    }
+
+
+
     private void listenersManager() {
         instance.getServer().getPluginManager().registerEvents(new PlayerJoin(this), instance);
         instance.getServer().getPluginManager().registerEvents(new PlayerQuitListener(this), instance);
@@ -444,6 +612,7 @@ public class GameService implements NakimeService {
         instance.getServer().getPluginManager().registerEvents(new PlayerDamage(this), instance);
         instance.getServer().getPluginManager().registerEvents(new PlayerDeath(this), instance);
         instance.getServer().getPluginManager().registerEvents(new PlayerInteract(this), instance);
+        instance.getServer().getPluginManager().registerEvents(new PlayerBreak(this), instance);
         instance.getServer().getPluginManager().registerEvents(new WaterFlow(), instance);
 
 

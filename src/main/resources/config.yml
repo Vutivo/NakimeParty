@@ -1,7 +1,7 @@
 Map:
-  world:
-    world: "world"
-    WorldSpawn: "-178, 5, 391, 0, 0"  # X, Y, Z, yaw, pitch
+  Nakime:
+    world: "Nakime"
+    WorldSpawn: "516, 104, 922, 0, 0"  # X, Y, Z, yaw, pitch
     Spawn:
-      - "-179, 5, 406, -180, 0"
-      - "-182, 5, 406, -180, 0"
+      - "522, 73, 991, 140, 0"
+      - "499, 85, 971, -90, 0"

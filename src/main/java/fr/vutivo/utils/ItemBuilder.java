@@ -16,6 +16,10 @@ public class ItemBuilder {
         this.item = new ItemStack(material, amount);
         this.meta = item.getItemMeta();
     }
+    public ItemBuilder(Material material, int amount, int color) {
+        this.item = new ItemStack(material, amount, (short) color);
+        this.meta = item.getItemMeta();
+    }
 
     public ItemBuilder setName(String name) {
         if (meta != null) {

@@ -110,7 +110,7 @@ public class PlayerInteract implements Listener {
                                             }
 
                                             // 3. Explosion + foudre
-                                            world.createExplosion(player.getLocation(), 3f, false); // casse les blocs
+                                            gameService.createCustomExplosion(player.getLocation(),1.5f);
                                             world.strikeLightningEffect(player.getLocation());
 
                                             // 4. Retirer l'immunité et appliquer 1 cœur de dégâts
@@ -189,7 +189,7 @@ public class PlayerInteract implements Listener {
                                 //Prendre le blocs ou le joueur a click droit
                                 Location targetBlock = event.getClickedBlock().getLocation();
                                 // Explosion
-                                world.createExplosion(targetBlock, 2.0f, false);
+                                gameService.createCustomExplosion(targetBlock,2f);
 
                                 // appliquer 2 cœurs de dégâts && knockback
                                 for (Player p : nearbyPlayers) {
@@ -249,13 +249,18 @@ public class PlayerInteract implements Listener {
                                                 Location loc = center.clone().add(x, y, z);
 
                                                 Block block = loc.getBlock();
-                                                // Sauvegarde du bloc d’origine
-                                                latestBlocks.put(loc, block.getType());
+                                                //si lze blocs fait partie de la list bloc indestructible on le laisse
+                                                if (!gameService.isUnbreakable(block)) {
+                                                    // Sauvegarde du bloc d’origine
+                                                    latestBlocks.put(loc, block.getType());
 
-                                                // Pose de l’eau
-                                                block.setType(Material.WATER);
+                                                    // Pose de l’eau
+                                                    block.setType(Material.WATER);
 
-                                                sphereLocations.add(loc);
+                                                    sphereLocations.add(loc);
+                                                }
+
+
                                             }
                                         }
                                     }
@@ -429,8 +434,8 @@ public class PlayerInteract implements Listener {
                         if (joueur.getRoleItem().getPower() > 0) {
                             if (joueur.getCooldown() == 0) {
                                 joueur.getPlayer().sendMessage("§bVous avez activé la §o§bBiwa§r§b !");
-                                // joueur.getRoleItem().setPower(joueur.getRoleItem().getPower() - 1);
-                                //joueur.setCooldown(joueur.getRoleItem().getCooldown());
+                                 joueur.getRoleItem().setPower(joueur.getRoleItem().getPower() - 1);
+                                joueur.setCooldown(joueur.getRoleItem().getCooldown());
 
                                 //On recupere la list des point de spawn du début avec SpawnManager
                                 List<Location> spawns = gameService.getSpawnManager().getSpawns(gameService.MAP_NAME);
