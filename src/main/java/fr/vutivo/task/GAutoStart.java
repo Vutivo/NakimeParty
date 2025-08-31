@@ -65,7 +65,7 @@ public class GAutoStart extends BukkitRunnable {
     }
 
     public void checkMinPlayers() {
-        if (gameService.getJoueurs().size() < gameService.minPlayers) {
+        if (gameService.getJoueurs().size() <= gameService.minPlayers) {
             gameService.setState(State.WAITING);
            Bukkit.broadcastMessage("§cPas assez de joueurs pour commencer la partie. Le timer est remis à zéro.");
             gameService.getScoreBoardManager().updateLineAll(2, ChatColor.GREEN + "Attente de joueurs...");
@@ -90,6 +90,7 @@ public class GAutoStart extends BukkitRunnable {
         // Ajouter Yoriichi si nécessaire
         if (hasYoriichi) {
             roles.add(Role.Yoriichi);
+            gameService.YoriichiAlive = true;
         }
 
         // Ajouter les slayers (maximum 8)
@@ -107,6 +108,7 @@ public class GAutoStart extends BukkitRunnable {
                 roles.add(Role.getRandomDemonExceptNakime());
             }
         }
+
 
         Collections.shuffle(roles);
 
@@ -136,13 +138,23 @@ public class GAutoStart extends BukkitRunnable {
                 gameService.addDemon(joueur);
             }
             gameService.initScoreboardGame(joueur);
+
+            //Ajouter la vue des Hp à yoriichi
+            if(joueur.getRole() == Role.Yoriichi){
+               gameService.viewHpPlayer(joueur.getPlayer());
+            }
         }
         Description.otherInfo(gameService);
+
+
+
 
 
         gameService.maxDemons = gameService.getDemons().size();
         gameService.maxSlayers = gameService.getSlayers().size();
         gameService.maxJoueurs = gameService.getJoueurs().size();
+
+
 
 
         gameService.getScoreBoardManager().updateLineAll(2,ChatColor.WHITE+"Joueurs : " + ChatColor.AQUA + gameService.getJoueurs().size() +ChatColor.WHITE+" / " +ChatColor.AQUA + gameService.maxJoueurs);

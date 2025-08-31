@@ -124,7 +124,7 @@ public enum Description {
 
     Susamaru(Role.Susamaru,
             "§6Effet : §7Aucun bonus permanent.\n\n" +
-                    "§6Item : §bArc Explosif§7. Pouvoir utilisable §e1 fois par partie§7, avec un cooldown de §e15 secondes§7 entre chaque tir.\n" +
+                    "§6Item : §bArc Explosif§7. Pouvoir utilisable avec un cooldown de §e15 secondes§7 entre chaque tir.\n" +
                     "§7Lorsque vous tirez une flèche, elle crée une explosion à l’impact.\n" +
                     "§7Tous les joueurs touchés par l’explosion perdent §c2❤§7.\n"
     ),
@@ -135,7 +135,7 @@ public enum Description {
     Yoriichi(Role.Yoriichi,
             "§6Effet : §7Vous bénéficiez d’un bonus permanent de §c+20% de force§7, §e+10% de vitesse§7 et §c+2❤§7.\n" +
                     "§7De plus, vous commencez la partie avec §e24 pommes dorées§7 au lieu de 16.\n\n" +
-                    "§6Passif : §7À chaque attaque, vous avez §e5% de chances§7 de désactiver temporairement tous les effets actifs du joueur touché pendant §e10 secondes§7.\n\n" +
+                    "§6Passif : §7À chaque attaque, vous avez §e15% de chances§7 de désactiver temporairement tous les effets actifs du joueur touché pendant §e10 secondes§7.\n\n" +
                     "§6Item : §bFlamme Éternelle§7. Pouvoir utilisable §e1 fois par partie§7 et durant §e1 minute§7.\n" +
                     "§7Pendant ce temps, chaque fois qu'un joueur autour de vous mange une pomme dorée, §cil ne gagnera aucun cœur d’absorption.\n"
     );

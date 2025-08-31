@@ -24,6 +24,9 @@ public class Joueur {
     private boolean canDamageMitsuri = true;
     private boolean nakimeRevived = true;
     private boolean isDomaSlowed = false;
+    private boolean canUseBow = true;
+    private boolean canUseEternalFire = false;
+    private boolean noEffect = false;
 
 
     public Joueur(Player player) {
@@ -83,6 +86,24 @@ public boolean getRageMode() {
     }
     public void setDomaSlowed(boolean domaSlowed) {
         isDomaSlowed = domaSlowed;
+    }
+    public boolean isCanUseBow() {
+        return canUseBow;
+    }
+    public void setCanUseBow(boolean canUseBow) {
+        this.canUseBow = canUseBow;
+    }
+    public boolean isCanUseEternalFire() {
+        return canUseEternalFire;
+    }
+    public void setCanUseEternalFire(boolean canUseEternalFire) {
+        this.canUseEternalFire = canUseEternalFire;
+    }
+    public boolean isNoEffect() {
+        return noEffect;
+    }
+    public void setNoEffect(boolean noEffect) {
+        this.noEffect = noEffect;
     }
 
     public Role getRole() {

@@ -38,23 +38,9 @@ public class PlayerDeath implements Listener {
         Joueur jKiller = gameService.getJoueur(killer);
         Joueur jVictim = gameService.getJoueur(victim);
 
-        if (jKiller != null && jVictim != null) {
-            jKiller.addKill();
-            // Récompenses
-            killer.getInventory().addItem(new ItemBuilder(Material.GOLDEN_APPLE, 2).build());
 
-
-        }
-        if(jKiller.getRole() == Role.Muzan){
-          jKiller.getPlayer().setMaxHealth( jKiller.getPlayer().getMaxHealth() + 1);
-          jKiller.setStrength(jKiller.getStrength()+3);
-          gameService.reloadEffectScoreboard(jKiller);
-
-
-        }
-        if(jKiller.getRole() == Role.Kokushibo) {
-            jKiller.getPlayer().setMaxHealth(jKiller.getPlayer().getMaxHealth() + 1);
-            jKiller.getPlayer().setHealth(jKiller.getPlayer().getMaxHealth());
+        if (jVictim == null) {
+            return;
         }
 
 
@@ -66,6 +52,9 @@ public class PlayerDeath implements Listener {
             akazaExplosion(jVictim);
 
         }
+        if(jVictim.getRole() ==Role.Yoriichi){
+            gameService.YoriichiAlive = false;
+        }
 
 
 
@@ -73,6 +62,7 @@ public class PlayerDeath implements Listener {
             jVictim.setNakimeRevived(false);
             victim.spigot().respawn();
             victim.setGameMode(GameMode.SURVIVAL);
+            victim.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 0));
             //on tp le joueur a un point de spawn prédéfini avec SpawnManager
             List<Location> spawns = gameService.getSpawnManager().getSpawns(gameService.MAP_NAME);
             Collections.shuffle(spawns);
@@ -88,14 +78,30 @@ public class PlayerDeath implements Listener {
             return;
         }
 
-        if (jVictim == null) {
-            return;
+        if (jKiller != null && jVictim != null) {
+            jKiller.addKill();
+            killer.getInventory().addItem(new ItemBuilder(Material.GOLDEN_APPLE, 2).build());
+
+
         }
+        if(jKiller.getRole() == Role.Muzan){
+            jKiller.getPlayer().setMaxHealth( jKiller.getPlayer().getMaxHealth() + 1);
+            jKiller.setStrength(jKiller.getStrength()+3);
+            gameService.reloadEffectScoreboard(jKiller);
+
+
+        }
+        if(jKiller.getRole() == Role.Kokushibo) {
+            jKiller.getPlayer().setMaxHealth(jKiller.getPlayer().getMaxHealth() + 1);
+            jKiller.getPlayer().setHealth(jKiller.getPlayer().getMaxHealth());
+        }
+
         Location location = victim.getLocation();
         victim.spigot().respawn();
         victim.teleport(location);
         victim.setGameMode(GameMode.SPECTATOR);
         jVictim.setAlive(false);
+        jVictim.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 0));
 
         Bukkit.broadcastMessage("§8==========================");
         Bukkit.broadcastMessage("");
@@ -118,6 +124,7 @@ public class PlayerDeath implements Listener {
 
                 break;
         }
+
 
     }
 

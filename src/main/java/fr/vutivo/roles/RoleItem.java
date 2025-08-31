@@ -21,9 +21,9 @@ public enum RoleItem {
     Doma(Role.Doma, Material.NETHER_STAR, "§bSérénité Mortelle", 0, 0, 20,1,0),
     Akaza(Role.Akaza, null, null, 20, 0, 0,0,0),
     Gyokko(Role.Gyokko, Material.NETHER_STAR, "§bTransposition", 0, 0, 20,3,30),
-    Gyutaro(Role.Gyutaro, Material.DIAMOND_HOE," §Houe de Souffrance", 20, 0, 0,1,0),
+    Gyutaro(Role.Gyutaro, Material.DIAMOND_HOE," §bHoue de Souffrance", 20, 0, 0,1,0),
     Kaigaku(Role.Kaigaku, Material.NETHER_STAR, "§bFoudre Déchaînée", 0, 20, 0,2,90),
-    Susamaru(Role.Susamaru, Material.BOW, "§bArc Explosif", 0, 0, 0,0,0),
+    Susamaru(Role.Susamaru, null, null, 0, 0, 0,0,15),
 
     Yoriichi(Role.Yoriichi, Material.NETHER_STAR, "§bFlamme Éternelle", 20, 10, 0,1,0);
 

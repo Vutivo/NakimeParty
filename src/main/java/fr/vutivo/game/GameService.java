@@ -3,6 +3,7 @@ package fr.vutivo.game;
 import fr.vutivo.NakimeParty;
 import fr.vutivo.listeners.*;
 import fr.vutivo.roles.Role;
+import fr.vutivo.scoreboard.TabList;
 import fr.vutivo.task.GameTask;
 import fr.vutivo.utils.NakimeService;
 import fr.vutivo.commands.StartCommand;
@@ -10,22 +11,25 @@ import fr.vutivo.game.map.SpawnManager;
 import fr.vutivo.scoreboard.ScoreBoardManager;
 import fr.vutivo.task.GAutoStart;
 import fr.vutivo.utils.ItemBuilder;
+import net.minecraft.server.v1_8_R3.PacketPlayOutPlayerInfo;
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.material.MaterialData;
 import org.bukkit.scoreboard.*;
 import org.bukkit.util.Vector;
 
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
+import java.util.stream.Collectors;
+
 
 public class GameService implements NakimeService {
 
@@ -33,22 +37,27 @@ public class GameService implements NakimeService {
     private final ScoreBoardManager scoreBoardManager;
     private final SpawnManager spawnManager;
     private ScoreboardManager scoreboardManager ;
+    private TabList tabList;
     private State state;
     public int minPlayers = 10;
     public int maxPlayers = 17;
     private final  GAutoStart gAutoStart = new GAutoStart(this);
     private  GameTask gameTask ;
     public boolean autoStarting = false;
-    public List <Role> compo = new ArrayList<>();
     public List<Joueur> joueurs;
+    public List<Joueur> allJoueurs = new ArrayList<>();
     public List <Joueur> Slayers ;
     public List <Joueur> Demons ;
+    public boolean YoriichiAlive;
     // List des blocs incassables
     public List <MaterialData> blocsUnbreakable ;
     public int maxSlayers ;
     public int maxDemons ;
     public int maxJoueurs;
     public String MAP_NAME = "Nakime";
+    public int slayerCountForReveal = 3;
+    public boolean revealNezuko = false;
+
 
 
     public GameService() {
@@ -57,9 +66,11 @@ public class GameService implements NakimeService {
         this.joueurs = new ArrayList<>();
         this.Slayers = new ArrayList<>();
         this.Demons = new ArrayList<>();
+        this.YoriichiAlive = false;
         this.blocsUnbreakable = new ArrayList<>();
         this.spawnManager = new SpawnManager(instance);
         this.scoreboardManager = Bukkit.getScoreboardManager();
+        this.tabList = new TabList(this);
 
 
     }
@@ -93,8 +104,7 @@ public class GameService implements NakimeService {
     public void unregister() {
         scoreBoardManager.unregister();
         deleteWorld();
-
-        // Nettoyage des ressources si nécessaire
+        getTabList().disable();
     }
 
     /**
@@ -111,10 +121,6 @@ public class GameService implements NakimeService {
     /**
      * gère la liste des joueurs
      */
-
-    public List <Role> getCompo() {
-        return compo;
-    }
     public List<Joueur> getJoueurs() {
         return joueurs;
     }
@@ -154,7 +160,7 @@ public class GameService implements NakimeService {
 
 
     /**
-     * Récupère le gestionnaire de scoreboards
+     * Récupère les gestionnaire
      */
     public ScoreBoardManager getScoreBoardManager() {
         return scoreBoardManager;
@@ -170,11 +176,81 @@ public class GameService implements NakimeService {
     public NakimeParty getInstance() {
         return instance;
     }
+    public TabList getTabList() {
+        return tabList;
+    }
 
     public void setGameTask(GameTask gameTask) {
         this.gameTask = gameTask;
     }
 
+    public void checkWin() {
+        int slayersAlive = getSlayers().size();
+        int demonsAlive = getDemons().size();
+
+        // 1️⃣ Priorité à Yoriichi
+        if (YoriichiAlive && slayersAlive == 0 && demonsAlive == 0) {
+            endGame("§6§lVICTOIRE ! §eYoriichi est le dernier survivant et remporte la partie !");
+            return;
+        }
+
+        // 2️⃣ Victoire des Slayers
+        if (!YoriichiAlive && demonsAlive == 0 && slayersAlive > 0) {
+            endGame("§6§lVICTOIRE ! §aLes slayers ont vaincu tous les démons !");
+            return;
+        }
+
+        // 3️⃣ Victoire des Démons
+        if (!YoriichiAlive && slayersAlive == 0 && demonsAlive > 0) {
+            endGame("§6§lVICTOIRE ! §cLes démons ont éliminé tous les slayers !");
+            return;
+        }
+
+        // 4️⃣ Égalité si tout le monde est mort
+        if (!YoriichiAlive && slayersAlive == 0 && demonsAlive == 0) {
+            endGame("§6§lÉGALITÉ ! §eTous les joueurs ont été éliminés !");
+
+        }
+    }
+
+
+
+    private void endGame(String message) {
+        if(getState() == State.ENDING) return; // Sécurité : pas de double fin
+        Bukkit.broadcastMessage(message);
+        setState(State.ENDING);
+        gameTask.cancel();
+        autoStarting = false;
+        sendTopKillersToAll();
+
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            spawnManager.teleportToWorldSpawn(player, MAP_NAME);
+            player.sendTitle(message, "");
+            player.sendMessage("§eLa partie va se fermer dans 15 secondes...");
+        }
+        Bukkit.getScheduler().runTaskLater(instance, new Runnable() {
+            @Override
+            public void run() {
+                Bukkit.shutdown();
+            }
+        }, 15 * 20L); // 15 secondes plus tard
+
+    }
+    public List<String> getTopKillers() {
+        return allJoueurs.stream()
+                .sorted(Comparator.comparingInt(Joueur::getKills).reversed())
+                .limit(5)
+                .map(joueur -> "§e" + joueur.getPlayer().getName() + " §7- §c" + joueur.getKills() + " kills")
+                .collect(Collectors.toList());
+    }
+
+    private void sendTopKillersToAll() {
+        List<String> topKillers = getTopKillers();
+        Bukkit.broadcastMessage("§6§lTop 5 des meilleurs tueurs :");
+        for (String line : topKillers) {
+            Bukkit.broadcastMessage(line);
+        }
+    }
 
 
     /**
@@ -245,10 +321,19 @@ public class GameService implements NakimeService {
                 .addEnchant(Enchantment.DAMAGE_ALL, 3)
                 .build();
 
+
         ItemStack bow = new ItemBuilder(Material.BOW, 1)
                 .addEnchant(Enchantment.DURABILITY, 2)
                 .addEnchant(Enchantment.ARROW_DAMAGE, 3)
                 .build();
+        if (joueur.getRole() == Role.Susamaru) {
+            ItemMeta bowMeta = bow.getItemMeta();
+            if (bowMeta != null) {
+                bowMeta.setDisplayName("§bArc explosif"); // Nom personnalisé
+                bow.setItemMeta(bowMeta);
+            }
+        }
+
 
         // Consommables
         int arrowCount = (joueur.getRole() == Role.Susamaru) ? 64 : 32;
@@ -613,7 +698,11 @@ public class GameService implements NakimeService {
         instance.getServer().getPluginManager().registerEvents(new PlayerDeath(this), instance);
         instance.getServer().getPluginManager().registerEvents(new PlayerInteract(this), instance);
         instance.getServer().getPluginManager().registerEvents(new PlayerBreak(this), instance);
+        instance.getServer().getPluginManager().registerEvents(new PlayerPlace(this), instance);
+        instance.getServer().getPluginManager().registerEvents(new PlayerDrop(), instance);
+        instance.getServer().getPluginManager().registerEvents(new PlayerEat(this), instance);
         instance.getServer().getPluginManager().registerEvents(new WaterFlow(), instance);
+        instance.getServer().getPluginManager().registerEvents(new TabList(this), instance);
 
 
 

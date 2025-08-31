@@ -16,6 +16,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
@@ -52,6 +54,7 @@ public class PlayerInteract implements Listener {
                             joueur.getRoleItem().setPower(0);
                             joueur.setSpeed(joueur.getSpeed() + 10);
                             joueur.setStrength(joueur.getStrength() + 10);
+                            joueur.setRageMode(true);
                             gameService.reloadEffectScoreboard(joueur);
 
                             Bukkit.getScheduler().runTaskLater(gameService.getInstance(), () -> {
@@ -59,6 +62,7 @@ public class PlayerInteract implements Listener {
                                 joueur.setStrength(joueur.getStrength() - 20);
                                 joueur.setResistance(joueur.getResistance() - 10);
                                 gameService.reloadEffectScoreboard(joueur);
+                                joueur.setRageMode(false);
                                 joueur.getPlayer().sendMessage("§cLa §o§cRage du Démon§r§c s'est terminée, vous perdez 10% de resistance et 10% de force.");
                             }, 20 * 15); // 15 secondes
 
@@ -110,7 +114,7 @@ public class PlayerInteract implements Listener {
                                             }
 
                                             // 3. Explosion + foudre
-                                            gameService.createCustomExplosion(player.getLocation(),1.5f);
+                                            gameService.createCustomExplosion(player.getLocation(), 1.5f);
                                             world.strikeLightningEffect(player.getLocation());
 
                                             // 4. Retirer l'immunité et appliquer 1 cœur de dégâts
@@ -189,7 +193,7 @@ public class PlayerInteract implements Listener {
                                 //Prendre le blocs ou le joueur a click droit
                                 Location targetBlock = event.getClickedBlock().getLocation();
                                 // Explosion
-                                gameService.createCustomExplosion(targetBlock,2f);
+                                gameService.createCustomExplosion(targetBlock, 2f);
 
                                 // appliquer 2 cœurs de dégâts && knockback
                                 for (Player p : nearbyPlayers) {
@@ -434,7 +438,7 @@ public class PlayerInteract implements Listener {
                         if (joueur.getRoleItem().getPower() > 0) {
                             if (joueur.getCooldown() == 0) {
                                 joueur.getPlayer().sendMessage("§bVous avez activé la §o§bBiwa§r§b !");
-                                 joueur.getRoleItem().setPower(joueur.getRoleItem().getPower() - 1);
+                                joueur.getRoleItem().setPower(joueur.getRoleItem().getPower() - 1);
                                 joueur.setCooldown(joueur.getRoleItem().getCooldown());
 
                                 //On recupere la list des point de spawn du début avec SpawnManager
@@ -466,8 +470,8 @@ public class PlayerInteract implements Listener {
                         if (joueur.getRoleItem().getPower() > 0) {
                             if (joueur.getCooldown() == 0) {
                                 joueur.getPlayer().sendMessage("§bVous avez activé la §o§bSérénité Mortelle§r§b !");
-                                //joueur.getRoleItem().setPower(joueur.getRoleItem().getPower() - 1);
-                               // joueur.setCooldown(joueur.getRoleItem().getCooldown());
+                                joueur.getRoleItem().setPower(joueur.getRoleItem().getPower() - 1);
+                                joueur.setCooldown(joueur.getRoleItem().getCooldown());
 
 
                                 new BukkitRunnable() {
@@ -518,21 +522,165 @@ public class PlayerInteract implements Listener {
                                 }.runTaskTimer(gameService.getInstance(), 0L, 20L);
 
 
-                            }else {
+                            } else {
                                 joueur.getPlayer().sendMessage("§cPouvoir en cooldown !" + joueur.getCooldown());
                             }
 
 
-                            }else {
+                        } else {
                             joueur.getPlayer().sendMessage("§cPouvoir en cooldown !" + joueur.getCooldown());
                         }
 
 
+                    }
+
+                    //Gyokko - Transposition
+                } else if (item.getType() == Material.NETHER_STAR && "§bTransposition".equals(name)) {
+                    if (joueur.getRole() == Role.Gyokko) {
+                        if (joueur.getRoleItem().getPower() > 0) {
+                            if (joueur.getCooldown() == 0) {
+                                joueur.setCooldown(joueur.getRoleItem().getCooldown());
+                                joueur.getRoleItem().setPower(joueur.getRoleItem().getPower() - 1);
+
+                                //Systeme de tp
+                                List<Location> spawns = gameService.getSpawnManager().getSpawns(gameService.MAP_NAME);
+                                Collections.shuffle(spawns);
+                                Location spawn = spawns.get(0);
+                                joueur.getPlayer().teleport(spawn);
+                                joueur.setStrength(joueur.getStrength() + 10);
+                                gameService.reloadEffectScoreboard(joueur);
+
+                                Bukkit.getScheduler().runTaskLater(gameService.getInstance(), new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        joueur.setStrength(joueur.getStrength() - 10);
+                                        gameService.reloadEffectScoreboard(joueur);
+                                    }
+                                }, 20 * 10); // 10 secondes
+
+                            } else {
+                                joueur.getPlayer().sendMessage("§cPouvoir en cooldown !" + joueur.getCooldown());
+
+                            }
+
+                        } else {
+                            joueur.getPlayer().sendMessage("§cVous avez déjà utilisé ce pouvoir !");
+                        }
+                    }
+
+                    //Gyutaro - Houe de Souffrance
+                } else if (item.getType() == Material.DIAMOND_HOE && " §bHoue de Souffrance".equals(name)) {
+                    if (joueur.getRole() == Role.Gyutaro) {
+                        Joueur target = gameService.getTargetJoueur(joueur, 10);
+                        if (target != null) {
+                            if (joueur.getCooldown() == 0) {
+                                joueur.setCooldown(joueur.getRoleItem().getCooldown());
+                                joueur.getRoleItem().setPower(joueur.getRoleItem().getPower() - 1);
+                                target.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 20 * 10, 1)); // Wither 1 pendant 10 secondes
+                                target.getPlayer().setMaxHealth(Math.max(0.5, target.getPlayer().getMaxHealth() - 2)); // Perte permanente de 1 cœur
+                                target.getPlayer().sendMessage("§cVous avez été touché par la Houe de Souffrance de Gyutaro ! Vous perdez 1 cœur pendant 2 minutes et êtes affecté par Wither 2 pendant 10 secondes.");
+                                joueur.getPlayer().sendMessage("§bVous avez activé la §o§bHoue de Souffrance§r§b sur " + target.getPlayer().getName() + " !");
+                                joueur.getPlayer().setMaxHealth(joueur.getPlayer().getMaxHealth() + 2); // Gain permanent de 1 cœur
+
+                                Bukkit.getScheduler().runTaskLater(gameService.getInstance(), new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        target.getPlayer().setMaxHealth(Math.min(20.0, target.getPlayer().getMaxHealth() + 2)); // Récupération du cœur perdu
+                                        target.getPlayer().sendMessage("§aVous avez récupéré le cœur perdu de la Houe de Souffrance de Gyutaro.");
+                                        joueur.getPlayer().setMaxHealth(Math.max(0.5, joueur.getPlayer().getMaxHealth() - 2)); // Perte du cœur gagné
+                                        joueur.getPlayer().sendMessage("§cVous perdez le cœur gagné de la Houe de Souffrance de Gyutaro.");
+
+                                    }
+                                }, 20 * 120); // 2 minutes
+                            } else {
+                                joueur.getPlayer().sendMessage("§cPouvoir en cooldown !" + joueur.getCooldown());
+
+                            }
+
+                        } else {
+                            joueur.getPlayer().sendMessage("§cAucun joueur ciblé à portée !");
                         }
 
                     }
+                    //Kaigaku - Foudre Déchaînée
+
+                } else if (item.getType() == Material.NETHER_STAR && "§bFoudre Déchaînée".equals(name)) {
+                    if (joueur.getRole() == Role.Kaigaku) {
+                        if (joueur.getRoleItem().getPower() > 0) {
+                            if (joueur.getCooldown() == 0) {
+                                joueur.getPlayer().sendMessage("§bVous avez activé la §o§bFoudre Déchaînée§r§b !");
+                                joueur.getRoleItem().setPower(joueur.getRoleItem().getPower() - 1);
+                                joueur.setCooldown(joueur.getRoleItem().getCooldown());
+
+                                // Cree une liste des joueurs autour
+                                List<Player> nearbyPlayers = new ArrayList<>();
+                                for (Player p : world.getPlayers()) {
+                                    if (!p.equals(joueur.getPlayer()) &&
+                                            p.getLocation().distance(joueur.getPlayer().getLocation()) <= 15) {
+                                        nearbyPlayers.add(p);
+                                    }
+                                }
+
+
+                                // Activer l'état "immunité" pour ces joueurs
+                                for (Player p : nearbyPlayers) {
+                                    Joueur j = gameService.getJoueur(p);
+                                    if (j != null) j.setIgnoreDamage(true);
+                                    world.strikeLightningEffect(p.getLocation());
+                                }
+
+
+
+                                // appliquer 2 cœurs de dégâts && knockback
+                                for (Player p : nearbyPlayers) {
+                                    Joueur j = gameService.getJoueur(p);
+                                    if (j != null) {
+                                        if (!p.equals(joueur.getPlayer())) { // ✅ Kaigaku ne prend pas ses propres dégâts custom
+                                            double newHealth = Math.max(0.5, p.getHealth() - 4.0);
+                                            p.setHealth(newHealth);
+                                            j.setIgnoreDamage(false);
+
+                                            p.sendMessage("§eVous avez été frappé par la foudre déchaînée de Kaigaku !");
+                                        }
+
+                                    }
+                                }
+                            }else {
+                                joueur.getPlayer().sendMessage("§cPouvoir en cooldown !" + joueur.getCooldown());
+                            }
+
+                        }else {
+                            joueur.getPlayer().sendMessage("§cVous avez déjà utilisé ce pouvoir !");
+                        }
+                    }
+
+                    //Yoriichi - Flamme Éternelle
+                } else if (item.getType() == Material.NETHER_STAR && "§bFlamme Éternelle".equals(name)) {
+                    if (joueur.getRole() == Role.Yoriichi) {
+                        if (joueur.getRoleItem().getPower() > 0) {
+                            if (joueur.getCooldown() == 0) {
+                                joueur.getPlayer().sendMessage("§bVous avez activé la §o§bFlamme Éternelle§r§b !");
+                                joueur.getRoleItem().setPower(joueur.getRoleItem().getPower() - 1);
+                                joueur.setCooldown(joueur.getRoleItem().getCooldown());
+                                joueur.setCanUseEternalFire(true);
+
+                                Bukkit.getScheduler().runTaskLater(gameService.getInstance(), new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        joueur.setCanUseEternalFire(false);
+                                        joueur.getPlayer().sendMessage("§bLa §o§bFlamme Éternelle§r§b de Yoriichi s'est dissipée !");
+
+                                    }
+                                }, 20 * 60); // 1 minute
+                            }
+
+
+
+                                    }
+                                }
+
                 }
             }
         }
     }
-
+}

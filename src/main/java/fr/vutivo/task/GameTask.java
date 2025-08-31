@@ -3,6 +3,8 @@ package fr.vutivo.task;
 import fr.vutivo.game.GameService;
 import fr.vutivo.game.Joueur;
 import fr.vutivo.game.State;
+import fr.vutivo.roles.Role;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -43,6 +45,37 @@ public class GameTask extends BukkitRunnable {
                     }
                 }
             }
+            //On check si on reveal ou non Nezuko
+            if (!gameService.revealNezuko) {
+
+                // Afficher les noms des Slayers
+                StringBuilder slayersList = new StringBuilder();
+                for (Joueur s : gameService.getSlayers()) {
+                    slayersList.append(s.getPlayer().getName()).append(" ");
+                }
+
+                    // Condition de reveal : 5 minutes écoulées ou nombre de Slayers <= 3
+                if (timer >= 300 || gameService.getSlayers().size() <= gameService.slayerCountForReveal) {
+                    gameService.revealNezuko = true;
+                    Joueur nezuko = gameService.getRole(Role.Nezuko);
+                    if (nezuko == null) {
+                        return;
+                    }
+
+                    for (Joueur demon : gameService.getDemons()) {
+                        Bukkit.broadcastMessage("§a[DEBUG] Envoi du message de reveal à : " + demon.getPlayer().getName());
+                        demon.getPlayer().sendMessage("§cNezuko a été révélée ! Il s'agit de §6" + nezuko.getPlayer().getName() + "§c !");
+                    }
+
+
+                    gameService.getTabList().revealNezukoForAll(nezuko.getPlayer());
+                }
+            }
+
+        }
+
+            //On check les conition de win
+            gameService.checkWin();
 
             // Update scoreboard timer
             timer++;
@@ -53,4 +86,4 @@ public class GameTask extends BukkitRunnable {
         }
     }
 
-}
+
